@@ -13,11 +13,16 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+      - name: Build Docker image
+        run: |
+          docker build -t github-demo .
+          docker save -o github-demo.tar github-demo
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-image
+          path: github-demo.tar
 
   test:
     needs: ["build"]
@@ -41,6 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["test"]
     steps:
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: docker-image
+
+      - name: Load Docker image
+        run: |
+          docker load -i github-demo.tar
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
