@@ -2,12 +2,25 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: ["dev"]
   pull_request:
-    branches: [ "dev" ]
-  
+    branches: ["dev"]
+
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
   test:
+    needs: ["build"]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -24,17 +37,10 @@ jobs:
           pip install pytest
       - name: Run pytest
         run: pytest app
-  push_to_registry:
-    name: Push Docker image to Docker Hub
+  deploy:
     runs-on: ubuntu-latest
+    needs: ["test"]
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -47,4 +53,3 @@ jobs:
           context: .
           push: true
           tags: abdelhamiedamr/github-demo:latest
-
